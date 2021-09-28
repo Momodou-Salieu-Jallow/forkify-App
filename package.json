@@ -8,7 +8,7 @@
     "build": "parcel build index.html --dist-dir ./dist"
   },
   "keywords": [],
-  "author": "Ahmet Alper",
+  "author": "Salieu Jallow",
   "license": "ISC",
   "devDependencies": {
     "parcel": "^2.0.0-beta.1",
