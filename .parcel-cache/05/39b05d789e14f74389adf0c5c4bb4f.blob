@@ -1,0 +1,61 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _icons = _interopRequireDefault(require("url:../../img/icons.svg"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+//loading the icons for parcel to convert them later
+class View {
+  constructor() {
+    _defineProperty(this, "_data", void 0);
+
+    _defineProperty(this, "_parentContainer", void 0);
+
+    _defineProperty(this, "_errorMessage", void 0);
+  }
+
+  renderSpinner() {
+    this._clear();
+
+    const markup = `
+            <div class="spinner">
+                <svg>
+                    <use href="${_icons.default}#icon-loader"></use>
+                </svg>
+            </div>
+        `;
+
+    this._parentContainer.insertAdjacentHTML('afterbegin', markup);
+  }
+
+  errorRender(message = this._errorMessage) {
+    const markup = `
+            <div class="error">
+                <div>
+                    <svg>
+                        <use href="${_icons.default}#icon-alert-triangle"></use>
+                    </svg>
+                </div>
+                <p>${message}</p>
+            </div>
+        `;
+
+    this._clear();
+
+    this._parentContainer.insertAdjacentHTML('afterbegin', markup);
+  }
+
+  _clear() {
+    this._parentContainer.innerHTML = '';
+  }
+
+}
+
+exports.default = View;

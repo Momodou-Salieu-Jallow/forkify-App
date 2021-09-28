@@ -1,0 +1,184 @@
+"use strict";
+
+require("core-js/modules/es.typed-array.float32-array.js");
+
+require("core-js/modules/es.typed-array.float64-array.js");
+
+require("core-js/modules/es.typed-array.int8-array.js");
+
+require("core-js/modules/es.typed-array.int16-array.js");
+
+require("core-js/modules/es.typed-array.int32-array.js");
+
+require("core-js/modules/es.typed-array.uint8-array.js");
+
+require("core-js/modules/es.typed-array.uint8-clamped-array.js");
+
+require("core-js/modules/es.typed-array.uint16-array.js");
+
+require("core-js/modules/es.typed-array.uint32-array.js");
+
+require("core-js/modules/es.typed-array.from.js");
+
+require("core-js/modules/es.typed-array.of.js");
+
+require("core-js/modules/web.immediate.js");
+
+require("core-js/modules/web.url.js");
+
+require("core-js/modules/web.url.to-json.js");
+
+require("core-js/modules/web.url-search-params.js");
+
+require("regenerator-runtime");
+
+var model = _interopRequireWildcard(require("./model"));
+
+var _recipeView = _interopRequireDefault(require("./views/recipeView"));
+
+var _searchView = _interopRequireDefault(require("./views/searchView"));
+
+var _pageView = _interopRequireDefault(require("./views/pageView"));
+
+var _bookmarkListView = _interopRequireDefault(require("./views/bookmarkListView"));
+
+var _userRecipeView = _interopRequireDefault(require("./views/userRecipeView"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+///////////////////////////////////////
+const showSearchResults = async function (query) {
+  try {
+    _searchView.default.renderSpinner();
+
+    await model.loadRecipeList(query);
+
+    if (model.state.search.results?.length > 0) {
+      _searchView.default.render(model.getResultsPage(1));
+
+      _pageView.default.render(model.state.search.currentPage, model.state.search.totalPage);
+    } else {
+      _pageView.default._clear();
+
+      _searchView.default.errorRender();
+    }
+  } catch (err) {
+    console.error(err.message);
+  }
+};
+
+const showRecipe = async function () {
+  //the id is assigned after the hashchange/load eventlistener.
+  const id = window.location.hash.slice(1);
+  if (id === '' || !id) return; //stop load event from crashing the app due to empty id on initial load trigger
+
+  if (id.slice(0, 4) === 'user') {
+    _recipeView.default.render(model.state.userRecipes.find(el => el.id === id)); //listen for serving
+
+
+    _recipeView.default.addHandlerServing(controlServing);
+
+    _recipeView.default.addHandlerDelete(controlDeleteUserRecipe);
+
+    return;
+  }
+
+  try {
+    //spinner while waiting for the recipe
+    _recipeView.default.renderSpinner();
+
+    await model.loadRecipe(id);
+
+    _recipeView.default.render(model.state.recipe); //listen for serving
+
+
+    _recipeView.default.addHandlerServing(controlServing); //listen for bookmark
+
+
+    _recipeView.default.addHandlerBookmark(controlBookmark);
+  } catch (err) {
+    console.error(err.message);
+
+    _recipeView.default.errorRender();
+  }
+};
+
+const controlPagination = function (page) {
+  _searchView.default.render(model.getResultsPage(page));
+
+  _pageView.default.render(model.state.search.currentPage, model.state.search.totalPage);
+};
+
+const controlServing = function (action, data) {
+  model.state.recipe = data;
+  model.updateServings(action);
+
+  _recipeView.default.update(model.state.recipe);
+};
+
+const controlBookmark = function (recipe) {
+  model.addBookmark(recipe);
+
+  _bookmarkListView.default.render(model.state.bookmarks);
+
+  _recipeView.default.render(model.state.recipe); //listen for serving
+
+
+  _recipeView.default.addHandlerServing(controlServing); //listen for bookmark
+
+
+  _recipeView.default.addHandlerBookmark(controlBookmark);
+};
+
+const controlUserRecipeHandler = function () {
+  _userRecipeView.default.addHandlerHideOverlay();
+
+  _userRecipeView.default.addHandlerUpload(controlAddRecipe);
+};
+
+const controlAddRecipe = function (userRecipe) {
+  model.addUserRecipe(userRecipe);
+
+  _searchView.default.render(model.state.userRecipes);
+};
+
+const controlDeleteUserRecipe = function (recipe) {
+  model.removeUserRecipe(recipe);
+
+  _searchView.default.render(model.state.userRecipes);
+
+  if (model.state.userRecipes.length === 0) {
+    window.location.hash = '';
+    location.reload();
+  }
+};
+
+const init = function () {
+  //listen for adding a recipe
+  _userRecipeView.default.addHandlerAddRecipe(controlUserRecipeHandler); //listen for events to load specific recipe
+
+
+  _recipeView.default.addHandlerRender(showRecipe); //listen for search bar submit
+
+
+  _searchView.default.addHandlerRender(showSearchResults); //listen for pagination
+
+
+  _pageView.default.addHandlerPagination(controlPagination); //load localstorage bookmarks
+
+
+  model.loadLocalStorageBookmarks(); //Render local bookmarks
+
+  _bookmarkListView.default.render(model.state.bookmarks); //load localstorage userRecipes
+
+
+  model.loadLocalStorageUserRecipes(); //render user recipes and bookmarks
+
+  _searchView.default.render([...model.state.userRecipes, ...model.state.bookmarks]);
+};
+
+init();

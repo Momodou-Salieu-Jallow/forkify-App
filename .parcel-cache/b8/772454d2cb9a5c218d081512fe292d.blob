@@ -1,0 +1,12 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.PAGINATION_PAGE_COUNT = exports.TIMEOUT_SEC = exports.baseURL = void 0;
+const baseURL = 'https://forkify-api.herokuapp.com/api/v2/recipes/';
+exports.baseURL = baseURL;
+const TIMEOUT_SEC = 10;
+exports.TIMEOUT_SEC = TIMEOUT_SEC;
+const PAGINATION_PAGE_COUNT = 10;
+exports.PAGINATION_PAGE_COUNT = PAGINATION_PAGE_COUNT;
